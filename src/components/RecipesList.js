@@ -1,23 +1,37 @@
-import React, {useContext, useEffect, useState} from 'react';
-import axios from "axios";
+import React, { useEffect, useState} from 'react';
 import Recipe from "./Recipe";
-import {SearchContext} from "../pages/Home";
+import {Link} from "react-router-dom";
 
 const RecipesList = () => {
     const [recipes, setRecipes] = useState([]);
-    const {query} = useContext(SearchContext);
+
+    const getRecipe = async () => {
+        const check = localStorage.getItem('popular');
+
+        if (check){
+            setRecipes(JSON.parse(check))
+        }
+        else{
+            const api = await fetch(`https://api.edamam.com/api/recipes/v2?type=public&app_id=3fcfa665&app_key=fab698145ee3e2e0bdd196a4c99beac3&diet=balanced&random=true`);
+            const data = await api.json();
+            localStorage.setItem('popular', JSON.stringify(data.hits))
+            setRecipes(data.hits);
+        }
+    }
+
     useEffect( () => {
-        axios.get(`https://api.edamam.com/api/recipes/v2?type=public&q=${query}&app_id=3fcfa665&app_key=fab698145ee3e2e0bdd196a4c99beac3`)
-            .then((res) => {
-                console.log(res.data.hits);
-                setRecipes(res.data.hits);
-            });
-    }, [query]);
+        getRecipe();
+    }, []);
     return (
         <div className="product-list">
             {recipes.map(recipe => (
-                <Recipe title={recipe.recipe.label} calories={recipe.recipe.calories}
-                        image={recipe.recipe.image} ingredientLines={recipe.recipe.ingredientLines}/>
+                <Link to={"/recipe/" + recipe.recipe.uri.slice(51)}>
+                <Recipe
+                    title={recipe.recipe.label}
+                    calories={recipe.recipe.calories}
+                    image={recipe.recipe.image}
+                    ingredientLines={recipe.recipe.ingredientLines}/>
+                </Link>
             ))}
         </div>
     );
